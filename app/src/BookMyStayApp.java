@@ -1,34 +1,44 @@
 import java.util.*;
 
+class BookingService {
+    private int rooms = 2;
+
+    synchronized void book(String guest) {
+        if (rooms > 0) {
+            System.out.println(guest + " booked a room");
+            rooms--;
+        } else {
+            System.out.println("No rooms available for " + guest);
+        }
+    }
+}
+
+class Guest extends Thread {
+    BookingService service;
+    String name;
+
+    Guest(BookingService s, String name) {
+        service = s;
+        this.name = name;
+    }
+
+    public void run() {
+        service.book(name);
+    }
+}
+
 public class BookMyStayApp {
 
     public static void main(String[] args) {
 
-        Map<String, String> bookings = new HashMap<>();
-        Map<String, Integer> inventory = new HashMap<>();
-        Stack<String> rollback = new Stack<>();
+        BookingService service = new BookingService();
 
-        inventory.put("Single", 1);
+        Guest g1 = new Guest(service, "Amit");
+        Guest g2 = new Guest(service, "Riya");
+        Guest g3 = new Guest(service, "Karan");
 
-        bookings.put("R1", "Single");
-        inventory.put("Single", inventory.get("Single") - 1);
-
-        String cancelId = "R1";
-
-        if (bookings.containsKey(cancelId)) {
-
-            String room = bookings.remove(cancelId);
-            rollback.push(cancelId);
-
-            inventory.put(room, inventory.get(room) + 1);
-
-            System.out.println("Booking Cancelled: " + cancelId);
-            System.out.println("Room Restored: " + room);
-        }
-        else {
-            System.out.println("Cancellation Failed: Reservation not found");
-        }
-
-        System.out.println("Current Inventory: " + inventory);
+        g1.start();
+        g2.start();
+        g3.start();
     }
 }
