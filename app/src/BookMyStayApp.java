@@ -1,76 +1,34 @@
 import java.util.*;
 
-class Reservation {
-    String reservationId;
-    String guestName;
-    String roomType;
-
-    Reservation(String reservationId, String guestName, String roomType) {
-        this.reservationId = reservationId;
-        this.guestName = guestName;
-        this.roomType = roomType;
-    }
-
-    void display() {
-        System.out.println("Reservation ID: " + reservationId +
-                " | Guest: " + guestName +
-                " | Room: " + roomType);
-    }
-}
-
-class BookingHistory {
-
-    private List<Reservation> history = new ArrayList<>();
-
-    void addReservation(Reservation r) {
-        history.add(r);
-    }
-
-    List<Reservation> getHistory() {
-        return history;
-    }
-}
-
-class BookingReportService {
-
-    void displayAllBookings(List<Reservation> list) {
-        for (Reservation r : list) {
-            r.display();
-        }
-    }
-
-    void summaryReport(List<Reservation> list) {
-        Map<String, Integer> count = new HashMap<>();
-
-        for (Reservation r : list) {
-            count.put(r.roomType, count.getOrDefault(r.roomType, 0) + 1);
-        }
-
-        System.out.println("\nBooking Summary:");
-        for (String type : count.keySet()) {
-            System.out.println(type + " : " + count.get(type));
-        }
+class InvalidBookingException extends Exception {
+    InvalidBookingException(String msg) {
+        super(msg);
     }
 }
 
 public class BookMyStayApp {
 
+    static void validateBooking(String roomType, int available) throws InvalidBookingException {
+        if(!(roomType.equals("Single") || roomType.equals("Double") || roomType.equals("Suite")))
+            throw new InvalidBookingException("Invalid Room Type!");
+
+        if(available <= 0)
+            throw new InvalidBookingException("No rooms available!");
+    }
+
     public static void main(String[] args) {
 
-        BookingHistory history = new BookingHistory();
+        String roomType = "Single";
+        int available = 0;
 
-        history.addReservation(new Reservation("RES-101", "Amit", "Single Room"));
-        history.addReservation(new Reservation("RES-102", "Riya", "Double Room"));
-        history.addReservation(new Reservation("RES-103", "Karan", "Suite Room"));
-        history.addReservation(new Reservation("RES-104", "Neha", "Single Room"));
+        try {
+            validateBooking(roomType, available);
+            System.out.println("Booking Confirmed for " + roomType);
+        }
+        catch(InvalidBookingException e) {
+            System.out.println("Booking Failed: " + e.getMessage());
+        }
 
-        BookingReportService reportService = new BookingReportService();
-
-        System.out.println("Book My Stay App - Version 8.1\n");
-
-        System.out.println("Booking History:");
-        reportService.displayAllBookings(history.getHistory());
-
-        reportService.summaryReport(history.getHistory());
+        System.out.println("System continues running safely.");
     }
 }
