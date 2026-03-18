@@ -1,70 +1,38 @@
 import java.util.*;
 
-class Reservation {
-    String guestName;
-    String roomType;
+class AddOnService {
+    String name;
+    double price;
 
-    Reservation(String guestName, String roomType) {
-        this.guestName = guestName;
-        this.roomType = roomType;
+    AddOnService(String name, double price) {
+        this.name = name;
+        this.price = price;
     }
 }
 
-class RoomInventory {
-    private HashMap<String, Integer> inventory = new HashMap<>();
+class AddOnServiceManager {
 
-    RoomInventory() {
-        inventory.put("Single Room", 2);
-        inventory.put("Double Room", 2);
-        inventory.put("Suite Room", 1);
+    private Map<String, List<AddOnService>> serviceMap = new HashMap<>();
+
+    void addService(String reservationId, AddOnService service) {
+        serviceMap.computeIfAbsent(reservationId, k -> new ArrayList<>()).add(service);
     }
 
-    int getAvailability(String type) {
-        return inventory.getOrDefault(type, 0);
-    }
-
-    void decrease(String type) {
-        inventory.put(type, inventory.get(type) - 1);
-    }
-}
-
-class BookingService {
-
-    private HashMap<String, Set<String>> allocatedRooms = new HashMap<>();
-    private Set<String> allRoomIds = new HashSet<>();
-    private int idCounter = 1;
-
-    void process(Queue<Reservation> queue, RoomInventory inventory) {
-
-        while (!queue.isEmpty()) {
-
-            Reservation r = queue.poll();
-
-            if (inventory.getAvailability(r.roomType) > 0) {
-
-                String roomId = r.roomType.replace(" ", "") + "-" + idCounter++;
-
-                while (allRoomIds.contains(roomId)) {
-                    roomId = r.roomType.replace(" ", "") + "-" + idCounter++;
-                }
-
-                allRoomIds.add(roomId);
-
-                allocatedRooms
-                        .computeIfAbsent(r.roomType, k -> new HashSet<>())
-                        .add(roomId);
-
-                inventory.decrease(r.roomType);
-
-                System.out.println("Reservation Confirmed: " + r.guestName +
-                        " | " + r.roomType +
-                        " | Room ID: " + roomId);
-
-            } else {
-                System.out.println("Reservation Failed (No Availability): " +
-                        r.guestName + " | " + r.roomType);
-            }
+    double calculateTotal(String reservationId) {
+        double total = 0;
+        List<AddOnService> list = serviceMap.getOrDefault(reservationId, new ArrayList<>());
+        for (AddOnService s : list) {
+            total += s.price;
         }
+        return total;
+    }
+
+    void displayServices(String reservationId) {
+        List<AddOnService> list = serviceMap.getOrDefault(reservationId, new ArrayList<>());
+        for (AddOnService s : list) {
+            System.out.println(s.name + " : ₹" + s.price);
+        }
+        System.out.println("Total Add-On Cost: ₹" + calculateTotal(reservationId));
     }
 }
 
@@ -72,18 +40,17 @@ public class BookMyStayApp {
 
     public static void main(String[] args) {
 
-        Queue<Reservation> queue = new LinkedList<>();
+        AddOnServiceManager manager = new AddOnServiceManager();
 
-        queue.add(new Reservation("Amit", "Single Room"));
-        queue.add(new Reservation("Riya", "Double Room"));
-        queue.add(new Reservation("Karan", "Suite Room"));
-        queue.add(new Reservation("Neha", "Suite Room"));
+        String reservationId = "RES-101";
 
-        RoomInventory inventory = new RoomInventory();
-        BookingService service = new BookingService();
+        manager.addService(reservationId, new AddOnService("Breakfast", 500));
+        manager.addService(reservationId, new AddOnService("Airport Pickup", 1200));
+        manager.addService(reservationId, new AddOnService("Spa Access", 1500));
 
-        System.out.println("Book My Stay App - Version 6.1\n");
+        System.out.println("Book My Stay App - Version 7.1\n");
 
-        service.process(queue, inventory);
+        System.out.println("Services for Reservation: " + reservationId);
+        manager.displayServices(reservationId);
     }
 }
