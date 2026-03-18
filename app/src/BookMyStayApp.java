@@ -1,5 +1,4 @@
-import java.util.Queue;
-import java.util.LinkedList;
+import java.util.*;
 
 class Reservation {
     String guestName;
@@ -9,26 +8,62 @@ class Reservation {
         this.guestName = guestName;
         this.roomType = roomType;
     }
+}
 
-    void display() {
-        System.out.println("Guest: " + guestName + " | Requested Room: " + roomType);
+class RoomInventory {
+    private HashMap<String, Integer> inventory = new HashMap<>();
+
+    RoomInventory() {
+        inventory.put("Single Room", 2);
+        inventory.put("Double Room", 2);
+        inventory.put("Suite Room", 1);
+    }
+
+    int getAvailability(String type) {
+        return inventory.getOrDefault(type, 0);
+    }
+
+    void decrease(String type) {
+        inventory.put(type, inventory.get(type) - 1);
     }
 }
 
-class BookingRequestQueue {
-    private Queue<Reservation> queue;
+class BookingService {
 
-    BookingRequestQueue() {
-        queue = new LinkedList<>();
-    }
+    private HashMap<String, Set<String>> allocatedRooms = new HashMap<>();
+    private Set<String> allRoomIds = new HashSet<>();
+    private int idCounter = 1;
 
-    void addRequest(Reservation r) {
-        queue.add(r);
-    }
+    void process(Queue<Reservation> queue, RoomInventory inventory) {
 
-    void displayRequests() {
-        for (Reservation r : queue) {
-            r.display();
+        while (!queue.isEmpty()) {
+
+            Reservation r = queue.poll();
+
+            if (inventory.getAvailability(r.roomType) > 0) {
+
+                String roomId = r.roomType.replace(" ", "") + "-" + idCounter++;
+
+                while (allRoomIds.contains(roomId)) {
+                    roomId = r.roomType.replace(" ", "") + "-" + idCounter++;
+                }
+
+                allRoomIds.add(roomId);
+
+                allocatedRooms
+                        .computeIfAbsent(r.roomType, k -> new HashSet<>())
+                        .add(roomId);
+
+                inventory.decrease(r.roomType);
+
+                System.out.println("Reservation Confirmed: " + r.guestName +
+                        " | " + r.roomType +
+                        " | Room ID: " + roomId);
+
+            } else {
+                System.out.println("Reservation Failed (No Availability): " +
+                        r.guestName + " | " + r.roomType);
+            }
         }
     }
 }
@@ -37,15 +72,18 @@ public class BookMyStayApp {
 
     public static void main(String[] args) {
 
-        BookingRequestQueue bookingQueue = new BookingRequestQueue();
+        Queue<Reservation> queue = new LinkedList<>();
 
-        bookingQueue.addRequest(new Reservation("Amit", "Single Room"));
-        bookingQueue.addRequest(new Reservation("Riya", "Double Room"));
-        bookingQueue.addRequest(new Reservation("Karan", "Suite Room"));
+        queue.add(new Reservation("Amit", "Single Room"));
+        queue.add(new Reservation("Riya", "Double Room"));
+        queue.add(new Reservation("Karan", "Suite Room"));
+        queue.add(new Reservation("Neha", "Suite Room"));
 
-        System.out.println("Book My Stay App - Version 5.1");
-        System.out.println("Booking Requests in Queue (FIFO Order):\n");
+        RoomInventory inventory = new RoomInventory();
+        BookingService service = new BookingService();
 
-        bookingQueue.displayRequests();
+        System.out.println("Book My Stay App - Version 6.1\n");
+
+        service.process(queue, inventory);
     }
 }
