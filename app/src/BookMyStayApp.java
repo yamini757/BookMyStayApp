@@ -1,44 +1,41 @@
+import java.io.*;
 import java.util.*;
 
-class BookingService {
-    private int rooms = 2;
-
-    synchronized void book(String guest) {
-        if (rooms > 0) {
-            System.out.println(guest + " booked a room");
-            rooms--;
-        } else {
-            System.out.println("No rooms available for " + guest);
-        }
-    }
-}
-
-class Guest extends Thread {
-    BookingService service;
-    String name;
-
-    Guest(BookingService s, String name) {
-        service = s;
-        this.name = name;
-    }
-
-    public void run() {
-        service.book(name);
-    }
+class DataStore implements Serializable {
+    Map<String,Integer> inventory = new HashMap<>();
+    List<String> bookings = new ArrayList<>();
 }
 
 public class BookMyStayApp {
 
     public static void main(String[] args) {
 
-        BookingService service = new BookingService();
+        String file = "hotel.dat";
+        DataStore data = new DataStore();
 
-        Guest g1 = new Guest(service, "Amit");
-        Guest g2 = new Guest(service, "Riya");
-        Guest g3 = new Guest(service, "Karan");
+        data.inventory.put("Single",5);
+        data.inventory.put("Double",3);
+        data.bookings.add("R1-Amit");
+        data.bookings.add("R2-Riya");
 
-        g1.start();
-        g2.start();
-        g3.start();
+        try {
+            ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(file));
+            out.writeObject(data);
+            out.close();
+            System.out.println("Data saved.");
+        } catch(Exception e) {
+            System.out.println("Save error");
+        }
+
+        try {
+            ObjectInputStream in = new ObjectInputStream(new FileInputStream(file));
+            DataStore restored = (DataStore) in.readObject();
+            in.close();
+
+            System.out.println("Recovered Inventory: " + restored.inventory);
+            System.out.println("Recovered Bookings: " + restored.bookings);
+        } catch(Exception e) {
+            System.out.println("Recovery failed.");
+        }
     }
 }
